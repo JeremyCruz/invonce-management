@@ -88,9 +88,19 @@ def upload_file():
 @app.route('/add-manual', methods=['POST'])
 def add_manual_invoice():
     invoice_data = {
+        'Type': request.form['type'],
+        'Category': request.form['category'],
+        'Razon Social': request.form['ruc_name'],
+        'RUC': request.form['ruc'],
         'Invoice Number': request.form['invoice_number'],
         'Date': request.form['date'],
-        'Total Amount': request.form['total_amount']
+        'Sub Total': request.form['subtotal'],
+        'IGV': request.form['igv'],
+        'Inafecta': request.form['inafecta'],
+        'Gravada': request.form['gravada'],
+        'Total Amount': request.form['total_amount'],
+        'Method Payment': request.form['method_payment'],
+        'Responsable': request.form['responsable']
     }
     
     save_to_excel(invoice_data)
