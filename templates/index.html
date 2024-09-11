@@ -28,40 +28,84 @@
             <h2 class="mb-4">Agregar Factura Manualmente</h2>
             <form id="manualForm" method="post" action="/add-manual">
                 <div class="form-group">
-                    <label for="invoiceType">Tipo de Factura</label>
+                    <label for="invoiceType">Tipo de Documento</label>
                     <select class="form-control" id="invoiceType" name="type">
-                        <option value="Compra">Compra</option>
-                        <option value="Venta">Venta</option>
+                        <option value="Factura">Factura</option>
+                        <option value="Boleta">Boleta</option>
+                        <option value="BoletaDNI">Boleta DNI</option>
                         <!-- Puedes añadir más opciones aquí -->
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="invoiceCategory">Categoría</label>
                     <select class="form-control" id="invoiceCategory" name="category">
-                        <option value="Gastos">Gastos</option>
-                        <option value="Ingresos">Ingresos</option>
+                        <option value="General">General</option>
+                        <option value="Avicola">Avicola</option>
+                        <option value="Carnes">Carnes</option>
+                        <option value="Marino">Marino</option>
+                        <option value="Abarrotes">Abarrotes</option>
+                        <option value="Otro">Otro</option>
+                        <!-- Puedes añadir más opciones aquí -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="responsable">Responsable</label>
+                    <select class="form-control" id="responsable" name="responsable">
+                        <option value="Bahia">Bahia</option>
+                        <option value="Tipos">Tipos</option>
+                        <option value="Eduardo">Eduardo</option>
+                        <option value="Grecia">Grecia</option>
+                        <option value="Externo">Externo</option>
+                        <option value="Otro">Otro</option>
+                        <!-- Puedes añadir más opciones aquí -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="methodPayment">Metodo de Pago</label>
+                    <select class="form-control" id="methodPayment" name="pay_method">
+                        <option value="BBVA">BBVA</option>
+                        <option value="IBK">Interbank</option>
+                        <option value="CMR">CMR</option>
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="DebBBVA">Debito BBVA</option>
                         <!-- Puedes añadir más opciones aquí -->
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="rucName">Razón Social</label>
-                    <input type="text" class="form-control" id="rucName" name="ruc_name" placeholder="Ingresa la razón social" required>
+                    <input type="text" class="form-control" id="rucName" name="ruc_name" placeholder="Ingresa la razón social" value="{{ invoice_data.ruc_name if invoice_data else '' }}" required>
                 </div>
                 <div class="form-group">
                     <label for="ruc">RUC</label>
-                    <input type="text" class="form-control" id="ruc" name="ruc" placeholder="Ingresa el RUC" required>
+                    <input type="text" class="form-control" id="ruc" name="ruc" placeholder="Ingresa el RUC" value="{{ invoice_data.ruc if invoice_data else '' }}" required>
                 </div>
                 <div class="form-group">
                     <label for="invoiceNumber">Número de Factura</label>
-                    <input type="text" class="form-control" id="invoiceNumber" name="invoice_number" placeholder="Ingresa el número de factura" required>
+                    <input type="text" class="form-control" id="invoiceNumber" name="invoice_number" placeholder="Ingresa el número de factura" value="{{ invoice_data.invoice_number if invoice_data else '' }}" required>
                 </div>
                 <div class="form-group">
                     <label for="date">Fecha</label>
-                    <input type="date" class="form-control" id="date" name="date" required>
+                    <input type="text" class="form-control" id="date" name="date" value="{{ invoice_data.date if invoice_data else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="og">Op Gravada</label>
+                    <input type="number" class="form-control" id="og" name="og" placeholder="Ingresa el monto total" step="0.01" value="{{ invoice_data.og if invoice_data else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="oi">Op Inafecta</label>
+                    <input type="number" class="form-control" id="oi" name="oi" placeholder="Ingresa el monto total" step="0.01" value="{{ invoice_data.oi if invoice_data else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="oe">Op Exonerada</label>
+                    <input type="number" class="form-control" id="oe" name="oe" placeholder="Ingresa el monto total" step="0.01" value="{{ invoice_data.oe if invoice_data else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="igv">IGV</label>
+                    <input type="number" class="form-control" id="igv" name="igv" placeholder="Ingresa el monto total" step="0.01" value="{{ invoice_data.igv if invoice_data else '' }}" required>
                 </div>
                 <div class="form-group">
                     <label for="totalAmount">Monto Total</label>
-                    <input type="number" class="form-control" id="totalAmount" name="total_amount" placeholder="Ingresa el monto total" step="0.01" required>
+                    <input type="number" class="form-control" id="totalAmount" name="total_amount" placeholder="Ingresa el monto total" step="0.01" value="{{ invoice_data.total_amount if invoice_data else '' }}" required>
                 </div>
                 <button type="submit" class="btn btn-success btn-block">Agregar Factura</button>
             </form>
@@ -79,9 +123,10 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.7/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+   <!-- Bootstrap JS and dependencies -->
+   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.7/dist/umd/popper.min.js"></script>
+   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
 </body>
 </html>

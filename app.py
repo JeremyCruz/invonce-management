@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash
 import os
 import pandas as pd
 import cv2
@@ -7,11 +7,11 @@ import fitz  # PyMuPDF
 import re
 from werkzeug.utils import secure_filename
 
-
 # Configuración de Flask
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'png', 'jpg', 'jpeg'}
+app.config['SECRET_KEY'] = '51d6aedc6dc9cfbd238d3b6bf85ffc1e'  # Configura una clave secreta aquí
 
 # Crear la carpeta 'uploads/' si no existe
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
@@ -38,17 +38,37 @@ def image_to_text(image_path):
 
 def extract_invoice_data(text):
     invoice_data = {}
-    invoice_number = re.search(r'Factura\s*#?:?\s*(\w+)', text)
-    if invoice_number:
-        invoice_data['Invoice Number'] = invoice_number.group(1)
+    ruc = re.search(r'RUC\s*#?:?\s*(\w+)', text)
+    if ruc:
+        invoice_data['ruc'] = ruc.group(1)
     
-    date = re.search(r'Fecha\s*:\s*(\d{2}/\d{2}/\d{4})', text)
+    date = re.search(r'Fecha de emisión\s*:\s*(\d{2}/\d{2}/\d{4})', text)
     if date:
-        invoice_data['Date'] = date.group(1)
+        invoice_data['date'] = date.group(1)
     
-    total_amount = re.search(r'Total\s*:\s*\$?([\d,]+\.\d{2})', text)
+    total_amount = re.search(r'Importe total:\s*S/\s*([\d,]+\.\d{2})', text)
     if total_amount:
-        invoice_data['Total Amount'] = total_amount.group(1)
+        invoice_data['total_amount'] = total_amount.group(1)
+    
+    og = re.search(r'SUBTOTAL:\s*S/\s*([\d,]+\.\d{2})', text)
+    if og:
+        invoice_data['og'] = og.group(1)
+    
+    oi = re.search(r'Op. Inafecta:\s*S/\s*([\d,]+\.\d{2})', text)
+    if oi:
+        invoice_data['oi'] = oi.group(1)
+    
+    oe = re.search(r'Op. Exonerada:\s*S/\s*([\d,]+\.\d{2})', text)
+    if og:
+        invoice_data['oe'] = oe.group(1)
+
+    igv = re.search(r'I.G.V:\s*S/\s*([\d,]+\.\d{2})', text)
+    if og:
+        invoice_data['igv'] = igv.group(1)
+
+    razon_social_match = re.search(r'\b[A-Za-z\s]+(?:SA|SAC|SRL|S.A.C.|S.A)\b', text)
+    if razon_social_match:
+        invoice_data['ruc_name'] = razon_social_match.group(0).strip()
     
     return invoice_data
 
@@ -64,26 +84,30 @@ def save_to_excel(data, excel_path='invoice_data.xlsx'):
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
+    invoice_data = {}
     if request.method == 'POST':
         if 'file' not in request.files:
+            flash('No file part', 'error')
             return redirect(request.url)
         file = request.files['file']
         if file.filename == '':
+            flash('No selected file', 'error')
             return redirect(request.url)
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(file_path)
-            
-            file_type = 'pdf' if filename.endswith('.pdf') else 'image'
-            text = pdf_to_text(file_path) if file_type == 'pdf' else image_to_text(file_path)
-            invoice_data = extract_invoice_data(text)
-
-            save_to_excel(invoice_data)
-
-            return render_template('index.html', invoice_data=invoice_data)
+            try:
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
+                
+                file_type = 'pdf' if filename.endswith('.pdf') else 'image'
+                text = pdf_to_text(file_path) if file_type == 'pdf' else image_to_text(file_path)
+                invoice_data = extract_invoice_data(text)
+                                
+                flash('File processed successfully', 'success')
+            except Exception as e:
+                flash(f"An error occurred: {str(e)}", 'error')
     
-    return render_template('index.html')
+    return render_template('index.html', invoice_data=invoice_data)
 
 @app.route('/add-manual', methods=['POST'])
 def add_manual_invoice():
@@ -91,16 +115,16 @@ def add_manual_invoice():
         'Type': request.form['type'],
         'Category': request.form['category'],
         'Razon Social': request.form['ruc_name'],
+        'Responsable': request.form['responsable'],
+        'Payment Method': request.form['pay_method'],
         'RUC': request.form['ruc'],
-        'Invoice Number': request.form['invoice_number'],
         'Date': request.form['date'],
-        'Sub Total': request.form['subtotal'],
+        'Invoice Number': request.form['invoice_number'],
+        'Op Gravada': request.form['og'],
+        'Op Inafecta': request.form['oi'],
+        'Op Exonerada': request.form['oe'],
         'IGV': request.form['igv'],
-        'Inafecta': request.form['inafecta'],
-        'Gravada': request.form['gravada'],
-        'Total Amount': request.form['total_amount'],
-        'Method Payment': request.form['method_payment'],
-        'Responsable': request.form['responsable']
+        'Total Amount': request.form['total_amount']
     }
     
     save_to_excel(invoice_data)
@@ -108,4 +132,4 @@ def add_manual_invoice():
     return redirect(url_for('upload_file'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(debug=True)
