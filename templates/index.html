@@ -108,6 +108,9 @@
                     <input type="number" class="form-control" id="totalAmount" name="total_amount" placeholder="Ingresa el monto total" step="0.01" value="{{ invoice_data.total_amount if invoice_data else '' }}" required>
                 </div>
                 <button type="submit" class="btn btn-success btn-block">Agregar Factura</button>
+                <div class="mt-4">
+                    <a href="{{ url_for('download_excel') }}" class="btn btn-info">Descargar Excel</a>
+                </div>
             </form>
         </div>
 
@@ -121,7 +124,9 @@
             </ul>
             {% endif %}
         </div>
+        
     </div>
+    
 
    <!-- Bootstrap JS and dependencies -->
    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
