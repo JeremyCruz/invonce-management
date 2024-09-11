@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, send_file, url_for, flash
 import os
 import pandas as pd
 import cv2
@@ -130,6 +130,14 @@ def add_manual_invoice():
     save_to_excel(invoice_data)
 
     return redirect(url_for('upload_file'))
+
+@app.route('/download-excel')
+def download_excel():
+    excel_path = 'invoice_data.xlsx'
+    if os.path.exists(excel_path):
+        return send_file(excel_path, as_attachment=True)
+    else:
+        return "Archivo no encontrado", 404
 
 if __name__ == '__main__':
     app.run(debug=True)
